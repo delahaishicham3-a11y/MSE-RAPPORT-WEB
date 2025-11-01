@@ -38,4 +38,7 @@ RUN echo "<Directory /var/www/html/public>" >> /etc/apache2/apache2.conf \
 EXPOSE 80
 
 # Étape 9 : Lancer Apache
-CMD mkdir -p /tmp/sessions && chmod -R 777 /tmp/sessions && apache2-foreground
+CMD mkdir -p /tmp/sessions && \
+    chown www-data:www-data /tmp/sessions && \
+    chmod 750 /tmp/sessions && \
+    apache2-foreground
