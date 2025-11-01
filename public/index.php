@@ -1,4 +1,5 @@
 <?php
+session_save_path("/tmp/sessions");
 session_start();
 
 require_once __DIR__ . '/../vendor/autoload.php';
