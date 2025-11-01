@@ -1,7 +1,7 @@
 <?php
 namespace MSE;
 
-use Database;
+use MSE/Database;
 use PDO;
 use Exception;
 
@@ -182,4 +182,5 @@ class Report {
         return $report;
     }
 }
+
 
