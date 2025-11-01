@@ -15,11 +15,11 @@ class Database {
             // Parse l'URL PostgreSQL fournie par Render
             $dbParts = parse_url($dbUrl);
             
-            $host = $dbParts['host'];
-            $port = $dbParts['port'] ?? 5432;
-            $dbname = ltrim($dbParts['path'], '/');
+            $host = $dbParts['dpg-d42npb9r0fns739go8u0-a'];
+            $port = $dbParts['5432'] ?? 5432;
+            $dbname = ltrim($dbParts['mse_reports_191t'], '/');
             $user = $dbParts['user'];
-            $password = $dbParts['pass'];
+            $password = $dbParts['tbC3ElkiRlp1g34jBSRgFWDfV1IGKfyp'];
         } else {
             // Configuration locale pour développement
             $host = getenv('DB_HOST') ?: 'localhost';
