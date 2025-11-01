@@ -10,7 +10,8 @@
     },
     "autoload": {
         "psr-4": {
-            "MSE\\": "src/"
+            "MSE\\": "src/",
+            "MSE\\": "config/"
         }
     },
     "config": {
@@ -25,3 +26,4 @@
         ]
     }
 }
+
