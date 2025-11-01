@@ -1,6 +1,6 @@
 <?php
 /**
- * Configuration de la base de données PostgreSQL avec support photos
+ * Configuration de la base de données PostgreSQL avec support des photos
  */
 
 class Database {
@@ -8,20 +8,20 @@ class Database {
     private $pdo;
     
     private function __construct() {
-        // Récupérer les variables d'environnement (Render les fournit automatiquement)
-        $dbUrl = getenv('mse_reports_191t_user');
+        // Récupérer l'URL de connexion PostgreSQL fournie par Render (ou autre plateforme)
+        $dbUrl = getenv('DATABASE_URL') ?: getenv('mse_reports_191t_user');
         
         if ($dbUrl) {
-            // Parse l'URL PostgreSQL fournie par Render
+            // Exemple d'URL Render : postgres://user:password@host:port/dbname
             $dbParts = parse_url($dbUrl);
-            
-            $host = $dbParts['dpg-d42npb9r0fns739go8u0-a'];
-            $port = $dbParts['5432'] ?? 5432;
-            $dbname = ltrim($dbParts['mse_reports_191t'], '/');
-            $user = $dbParts['user'];
-            $password = $dbParts['tbC3ElkiRlp1g34jBSRgFWDfV1IGKfyp'];
+
+            $host = $dbParts['host'] ?? 'localhost';
+            $port = $dbParts['port'] ?? 5432;
+            $dbname = isset($dbParts['path']) ? ltrim($dbParts['path'], '/') : 'mse_reports';
+            $user = $dbParts['user'] ?? 'postgres';
+            $password = $dbParts['pass'] ?? '';
         } else {
-            // Configuration locale pour développement
+            // Configuration locale pour le développement
             $host = getenv('DB_HOST') ?: 'localhost';
             $port = getenv('DB_PORT') ?: 5432;
             $dbname = getenv('DB_NAME') ?: 'mse_reports';
