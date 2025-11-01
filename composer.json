@@ -1,0 +1,27 @@
+{
+    "name": "mse/rapport-intervention",
+    "description": "MSE - Rapport d'Intervention",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.0",
+        "tecnickcom/tcpdf": "^6.6",
+        "phpmailer/phpmailer": "^6.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "MSE\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "@php -r \"file_exists('uploads') || mkdir('uploads', 0777, true);\"",
+            "@php -r \"file_exists('reports') || mkdir('reports', 0777, true);\""
+        ]
+    }
+}
