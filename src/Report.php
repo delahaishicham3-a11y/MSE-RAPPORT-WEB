@@ -13,6 +13,41 @@ class Report {
     }
 
     public function save($data, $photos = []) {
+
+  // === AJOUTER CETTE VALIDATION ===
+    $errors = [];
+    
+    if (empty($data['reportDate'])) {
+        $errors[] = "La date est obligatoire";
+    }
+    
+    if (empty($data['address'])) {
+        $errors[] = "L'adresse est obligatoire";
+    }
+    
+    if (!empty($data['email_destinataire']) && 
+        !filter_var($data['email_destinataire'], FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Email invalide : " . $data['email_destinataire'];
+    }
+    
+    // Valider les photos
+    foreach ($photos as $i => $photo) {
+        if (empty($photo['data'])) {
+            $errors[] = "Photo #" . ($i + 1) . " : données manquantes";
+        }
+        if (empty($photo['name'])) {
+            $errors[] = "Photo #" . ($i + 1) . " : nom manquant";
+        }
+    }
+    
+    if (!empty($errors)) {
+        throw new Exception(implode(", ", $errors));
+    }
+    // === FIN VALIDATION ===
+    
+    try {
+        $this->db->beginTransaction();
+        
         try {
             $this->db->beginTransaction();
 
@@ -183,4 +218,5 @@ private function savePhotos($reportId, $photos) {
         return $report;
     }
 }
+
 
