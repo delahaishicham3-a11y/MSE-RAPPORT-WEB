@@ -35,4 +35,4 @@ RUN echo "<Directory /var/www/html/public/> \
 EXPOSE 80
 
 # Étape 9 : Lancer Apache
-CMD ["apache2-foreground"]
+CMD mkdir -p /tmp/sessions && chmod -R 777 /tmp/sessions && apache2-foreground
