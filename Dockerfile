@@ -1,56 +1,38 @@
+# -----------------------------
+# 🐳 Dockerfile pour Render.com
+# -----------------------------
+
+# Étape 1 : Image PHP + Apache officielle
 FROM php:8.2-apache
 
-# Installer les extensions PHP nécessaires
+# Étape 2 : Installer les dépendances système
 RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libpq-dev \
-    zip \
-    unzip \
-    git \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd \
-    && docker-php-ext-install pdo pdo_pgsql pgsql \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    git unzip libpq-dev libzip-dev zip \
+    && docker-php-ext-install pdo pdo_pgsql
 
-# Activer mod_rewrite
-RUN a2enmod rewrite
+# Étape 3 : Installer Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Installer Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Étape 4 : Copier le projet dans le conteneur
+WORKDIR /var/www/html
+COPY . .
 
-# Copier les fichiers de l'application
-COPY . /var/www/html/
+# Étape 5 : Installer les dépendances PHP via Composer
+RUN composer install --no-interaction --no-dev --optimize-autoloader
 
-# Installer les dépendances PHP
-RUN cd /var/www/html && composer install --no-dev --optimize-autoloader
-
-# Créer les dossiers nécessaires avec permissions
-RUN mkdir -p /var/www/html/uploads /var/www/html/reports /tmp/sessions \
-    && chmod -R 777 /var/www/html/uploads /var/www/html/reports /tmp/sessions
-
-# Configurer Apache pour le dossier public
+# Étape 6 : Configurer Apache
+# (optionnel : changer le dossier racine si tu utilises /public)
 RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
 
-# Configurer PHP
-RUN echo "session.save_path = '/tmp/sessions'" >> /usr/local/etc/php/conf.d/session.ini \
-    && echo "upload_max_filesize = 50M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "post_max_size = 50M" >> /usr/local/etc/php/conf.d/uploads.ini \
-    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/memory.ini
+# Étape 7 : Autoriser les fichiers .env
+RUN a2enmod rewrite
+RUN echo "<Directory /var/www/html/public/> \
+    AllowOverride All \
+    Require all granted \
+</Directory>" >> /etc/apache2/apache2.conf
 
-# Permissions finales
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
-
-# Configuration Apache pour AllowOverride
-RUN echo '<Directory /var/www/html/public>\n\
-    Options Indexes FollowSymLinks\n\
-    AllowOverride All\n\
-    Require all granted\n\
-</Directory>' >> /etc/apache2/sites-available/000-default.conf
-
+# Étape 8 : Exposer le port HTTP
 EXPOSE 80
 
+# Étape 9 : Lancer Apache
 CMD ["apache2-foreground"]
