@@ -68,16 +68,38 @@ class Report {
         }
     }
 
-    private function savePhotos($reportId, $photos) {
-        $sql = "INSERT INTO report_photos (report_id, photo_data, photo_name, photo_type, photo_size, description) 
-                VALUES (:report_id, :photo_data, :photo_name, :photo_type, :photo_size, :description)";
+private function savePhotos($reportId, $photos) {
+    // Créer le dossier de stockage
+    $uploadDir = __DIR__ . '/../uploads/reports/' . $reportId;
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0755, true);
+    }
+    
+    // Modifier la requête SQL
+    $sql = "INSERT INTO report_photos (report_id, photo_path, photo_name, photo_type, photo_size, description) 
+            VALUES (:report_id, :photo_path, :photo_name, :photo_type, :photo_size, :description)";
 
-        $stmt = $this->db->prepare($sql);
+    $stmt = $this->db->prepare($sql);
 
-        foreach ($photos as $photo) {
+    foreach ($photos as $i => $photo) {
+        if (!empty($photo['data'])) {
+            // Décoder base64
+            $photoData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photo['data']));
+            
+            // Générer un nom unique
+            $extension = pathinfo($photo['name'], PATHINFO_EXTENSION) ?: 'jpg';
+            $filename = uniqid('photo_', true) . '.' . $extension;
+            $filepath = $uploadDir . '/' . $filename;
+            
+            // Sauvegarder sur disque
+            if (file_put_contents($filepath, $photoData) === false) {
+                throw new Exception("Impossible de sauvegarder la photo");
+            }
+            
+            // Sauvegarder le chemin en base
             $stmt->execute([
                 'report_id' => $reportId,
-                'photo_data' => $photo['data'],
+                'photo_path' => 'uploads/reports/' . $reportId . '/' . $filename,
                 'photo_name' => $photo['name'],
                 'photo_type' => $photo['type'],
                 'photo_size' => $photo['size'],
@@ -85,18 +107,32 @@ class Report {
             ]);
         }
     }
+}
 
-    public function getPhotos($reportId) {
-        $sql = "SELECT id, photo_data, photo_name, photo_type, photo_size, description, created_at 
-                FROM report_photos 
-                WHERE report_id = :report_id 
-                ORDER BY created_at ASC";
+ public function getPhotos($reportId) {
+    $sql = "SELECT id, photo_path, photo_name, photo_type, photo_size, description, created_at 
+            FROM report_photos 
+            WHERE report_id = :report_id 
+            ORDER BY created_at ASC";
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute(['report_id' => $reportId]);
-        return $stmt->fetchAll();
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute(['report_id' => $reportId]);
+    $photos = $stmt->fetchAll();
+    
+    // Charger les données des photos depuis le disque
+    foreach ($photos as &$photo) {
+        $fullPath = __DIR__ . '/../' . $photo['photo_path'];
+        if (file_exists($fullPath)) {
+            $photoData = file_get_contents($fullPath);
+            $photo['photo_data'] = 'data:' . $photo['photo_type'] . ';base64,' . base64_encode($photoData);
+        } else {
+            $photo['photo_data'] = null;
+        }
     }
-
+    
+    return $photos;
+}
+    
     public function deletePhoto($photoId) {
         $stmt = $this->db->prepare("DELETE FROM report_photos WHERE id = :id");
         return $stmt->execute(['id' => $photoId]);
@@ -147,3 +183,4 @@ class Report {
         return $report;
     }
 }
+
