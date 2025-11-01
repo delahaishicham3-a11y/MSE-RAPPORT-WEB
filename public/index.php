@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
-use MSE\Database;
+use MSE\database;
 use MSE\Report;
 use MSE\EmailService;
 use MSE\PdfService;
