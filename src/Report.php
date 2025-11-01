@@ -13,40 +13,35 @@ class Report {
     }
 
     public function save($data, $photos = []) {
-
-  // === AJOUTER CETTE VALIDATION ===
-    $errors = [];
-    
-    if (empty($data['reportDate'])) {
-        $errors[] = "La date est obligatoire";
-    }
-    
-    if (empty($data['address'])) {
-        $errors[] = "L'adresse est obligatoire";
-    }
-    
-    if (!empty($data['email_destinataire']) && 
-        !filter_var($data['email_destinataire'], FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Email invalide : " . $data['email_destinataire'];
-    }
-    
-    // Valider les photos
-    foreach ($photos as $i => $photo) {
-        if (empty($photo['data'])) {
-            $errors[] = "Photo #" . ($i + 1) . " : données manquantes";
+        // Validation des données
+        $errors = [];
+        
+        if (empty($data['reportDate'])) {
+            $errors[] = "La date est obligatoire";
         }
-        if (empty($photo['name'])) {
-            $errors[] = "Photo #" . ($i + 1) . " : nom manquant";
+        
+        if (empty($data['address'])) {
+            $errors[] = "L'adresse est obligatoire";
         }
-    }
-    
-    if (!empty($errors)) {
-        throw new Exception(implode(", ", $errors));
-    }
-    // === FIN VALIDATION ===
-    
-    try {
-        $this->db->beginTransaction();
+        
+        if (!empty($data['email_destinataire']) && 
+            !filter_var($data['email_destinataire'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = "Email invalide : " . $data['email_destinataire'];
+        }
+        
+        // Valider les photos
+        foreach ($photos as $i => $photo) {
+            if (empty($photo['data'])) {
+                $errors[] = "Photo #" . ($i + 1) . " : données manquantes";
+            }
+            if (empty($photo['name'])) {
+                $errors[] = "Photo #" . ($i + 1) . " : nom manquant";
+            }
+        }
+        
+        if (!empty($errors)) {
+            throw new Exception(implode(", ", $errors));
+        }
         
         try {
             $this->db->beginTransaction();
@@ -103,71 +98,40 @@ class Report {
         }
     }
 
-private function savePhotos($reportId, $photos) {
-    // Créer le dossier de stockage
-    $uploadDir = __DIR__ . '/../uploads/reports/' . $reportId;
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-    
-    // Modifier la requête SQL
-    $sql = "INSERT INTO report_photos (report_id, photo_path, photo_name, photo_type, photo_size, description) 
-            VALUES (:report_id, :photo_path, :photo_name, :photo_type, :photo_size, :description)";
+    private function savePhotos($reportId, $photos) {
+        $sql = "INSERT INTO report_photos (report_id, photo_data, photo_name, photo_type, photo_size, description) 
+                VALUES (:report_id, :photo_data, :photo_name, :photo_type, :photo_size, :description)";
 
-    $stmt = $this->db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
 
-    foreach ($photos as $i => $photo) {
-        if (!empty($photo['data'])) {
-            // Décoder base64
-            $photoData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $photo['data']));
-            
-            // Générer un nom unique
-            $extension = pathinfo($photo['name'], PATHINFO_EXTENSION) ?: 'jpg';
-            $filename = uniqid('photo_', true) . '.' . $extension;
-            $filepath = $uploadDir . '/' . $filename;
-            
-            // Sauvegarder sur disque
-            if (file_put_contents($filepath, $photoData) === false) {
-                throw new Exception("Impossible de sauvegarder la photo");
+        foreach ($photos as $photo) {
+            // Limite de 5 MB par photo
+            if (isset($photo['size']) && $photo['size'] > 5 * 1024 * 1024) {
+                throw new Exception("Photo trop volumineuse : " . $photo['name'] . " (max 5MB)");
             }
             
-            // Sauvegarder le chemin en base
             $stmt->execute([
                 'report_id' => $reportId,
-                'photo_path' => 'uploads/reports/' . $reportId . '/' . $filename,
+                'photo_data' => $photo['data'],
                 'photo_name' => $photo['name'],
                 'photo_type' => $photo['type'],
-                'photo_size' => $photo['size'],
+                'photo_size' => $photo['size'] ?? 0,
                 'description' => $photo['description'] ?? ''
             ]);
         }
     }
-}
 
- public function getPhotos($reportId) {
-    $sql = "SELECT id, photo_path, photo_name, photo_type, photo_size, description, created_at 
-            FROM report_photos 
-            WHERE report_id = :report_id 
-            ORDER BY created_at ASC";
+    public function getPhotos($reportId) {
+        $sql = "SELECT id, photo_data, photo_name, photo_type, photo_size, description, created_at 
+                FROM report_photos 
+                WHERE report_id = :report_id 
+                ORDER BY created_at ASC";
 
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute(['report_id' => $reportId]);
-    $photos = $stmt->fetchAll();
-    
-    // Charger les données des photos depuis le disque
-    foreach ($photos as &$photo) {
-        $fullPath = __DIR__ . '/../' . $photo['photo_path'];
-        if (file_exists($fullPath)) {
-            $photoData = file_get_contents($fullPath);
-            $photo['photo_data'] = 'data:' . $photo['photo_type'] . ';base64,' . base64_encode($photoData);
-        } else {
-            $photo['photo_data'] = null;
-        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['report_id' => $reportId]);
+        return $stmt->fetchAll();
     }
-    
-    return $photos;
-}
-    
+
     public function deletePhoto($photoId) {
         $stmt = $this->db->prepare("DELETE FROM report_photos WHERE id = :id");
         return $stmt->execute(['id' => $photoId]);
@@ -218,5 +182,3 @@ private function savePhotos($reportId, $photos) {
         return $report;
     }
 }
-
-
