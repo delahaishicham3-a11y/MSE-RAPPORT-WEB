@@ -11,8 +11,9 @@ class Database {
 
     private function __construct() {
         $dbUrl = getenv('DATABASE_URL');
-
+        
         if ($dbUrl) {
+            // Parse de l'URL PostgreSQL
             $dbParts = parse_url($dbUrl);
             $host = $dbParts['host'];
             $port = $dbParts['port'] ?? 5432;
@@ -20,6 +21,7 @@ class Database {
             $user = $dbParts['user'];
             $password = $dbParts['pass'];
         } else {
+            // Configuration par défaut (fallback)
             $host = getenv('DB_HOST') ?: 'localhost';
             $port = getenv('DB_PORT') ?: 5432;
             $dbname = getenv('DB_NAME') ?: 'mse_reports';
@@ -34,20 +36,21 @@ class Database {
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
+            
+            // Initialiser les tables
             $this->initTables();
+            
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
-
-             // Message d'erreur selon l'environnement
-    $isDev = (getenv('APP_ENV') === 'development');
-    
-    if ($isDev) {
-        throw new Exception("Erreur de connexion à la base de données : " . $e->getMessage());
-    } else {
-        throw new Exception("Impossible de se connecter à la base de données. Veuillez contacter le support.");
-    }
-}
-            throw $e;
+            
+            // Message d'erreur selon l'environnement
+            $isDev = (getenv('APP_ENV') === 'development');
+            
+            if ($isDev) {
+                throw new Exception("Erreur de connexion à la base de données : " . $e->getMessage());
+            } else {
+                throw new Exception("Impossible de se connecter à la base de données. Veuillez vérifier la configuration DATABASE_URL.");
+            }
         }
     }
 
@@ -79,7 +82,7 @@ class Database {
             anomalies TEXT,
             travaux_realises TEXT,
             recommandations TEXT,
-            urgence VARCHAR(20),
+            urgence VARCHAR(20) DEFAULT 'faible',
             intervenant VARCHAR(100),
             mesures JSONB,
             controles JSONB,
@@ -110,11 +113,18 @@ class Database {
         CREATE INDEX IF NOT EXISTS idx_report_photos_report_id ON report_photos(report_id);
         ";
 
-        $this->pdo->exec($sql);
+        try {
+            $this->pdo->exec($sql);
+        } catch (PDOException $e) {
+            error_log("Table initialization failed: " . $e->getMessage());
+            // Ne pas bloquer si les tables existent déjà
+        }
     }
 
+    // Empêcher le clonage
     private function __clone() {}
 
+    // Empêcher la désérialisation
     public function __wakeup() {
         throw new Exception("Cannot unserialize singleton");
     }
