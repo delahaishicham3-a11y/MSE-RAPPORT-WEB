@@ -26,10 +26,11 @@ RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available
 
 # Étape 7 : Autoriser les fichiers .env
 RUN a2enmod rewrite
-RUN echo "<Directory /var/www/html/public/> \
-    AllowOverride All \
-    Require all granted \
-</Directory>" >> /etc/apache2/apache2.conf
+RUN echo "<Directory /var/www/html>" >> /etc/apache2/apache2.conf
+RUN echo "AllowOverride All" >> /etc/apache2/apache2.conf
+RUN echo "Require all granted" >> /etc/apache2/apache2.conf
+RUN echo "</Directory>" >> /etc/apache2/apache2.conf
+
 
 # Étape 8 : Exposer le port HTTP
 EXPOSE 80
