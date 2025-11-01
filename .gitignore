@@ -1,0 +1,25 @@
+# Dépendances
+/vendor/
+/node_modules/
+
+# Environnement
+.env
+.env.local
+
+# Uploads et temp
+/uploads/
+/temp/
+*.pdf
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
