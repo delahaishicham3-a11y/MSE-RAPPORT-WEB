@@ -9,17 +9,17 @@ class Database {
     
     private function __construct() {
         // Récupérer les variables d'environnement (Render les fournit automatiquement)
-        $dbUrl = getenv('mse_reports_191t_user');
+        $dbUrl = getenv('DATABASE_URL');
         
         if ($dbUrl) {
             // Parse l'URL PostgreSQL fournie par Render
             $dbParts = parse_url($dbUrl);
             
-            $host = $dbParts['dpg-d42npb9r0fns739go8u0-a'];
-            $port = $dbParts['5432'] ?? 5432;
-            $dbname = ltrim($dbParts['mse_reports_191t'], '/');
-            $user = $dbParts['user'];
-            $password = $dbParts['tbC3ElkiRlp1g34jBSRgFWDfV1IGKfyp'];
+            $host = isset($dbParts['host']) ? $dbParts['host'] : null;
+            $port = isset($dbParts['port']) ? $dbParts['port'] : 5432;
+            $dbname = isset($dbParts['path']) ? ltrim($dbParts['path'], '/') : null;
+            $user = isset($dbParts['user']) ? $dbParts['user'] : null;
+            $password = isset($dbParts['pass']) ? $dbParts['pass'] : null;
         } else {
             // Configuration locale pour développement
             $host = getenv('DB_HOST') ?: 'localhost';
