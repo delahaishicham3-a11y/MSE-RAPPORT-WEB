@@ -37,6 +37,16 @@ class Database {
             $this->initTables();
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
+
+             // Message d'erreur selon l'environnement
+    $isDev = (getenv('APP_ENV') === 'development');
+    
+    if ($isDev) {
+        throw new Exception("Erreur de connexion à la base de données : " . $e->getMessage());
+    } else {
+        throw new Exception("Impossible de se connecter à la base de données. Veuillez contacter le support.");
+    }
+}
             throw $e;
         }
     }
