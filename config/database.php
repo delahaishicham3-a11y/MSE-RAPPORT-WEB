@@ -10,7 +10,7 @@ class Database {
     private $pdo;
 
     private function __construct() {
-        $dbUrl = getenv('postgresql://mse_reports_okn4_user:P0Gmi9cmWXbeK5vPhsD8VS11BubfIHOd@dpg-d42pve0dl3ps73clm2gg-a/mse_reports_okn4');
+        $dbUrl = getenv('DATABASE_URL');
 
         if ($dbUrl) {
             $dbParts = parse_url($dbUrl);
