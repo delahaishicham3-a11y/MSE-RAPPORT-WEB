@@ -44,5 +44,6 @@ CMD mkdir -p /tmp/sessions && \
     chmod 750 /tmp/sessions && \
     apache2-foreground
 
-RUN apt-get update && apt-get install -y php8.2-pgsql
+RUN apt-get update && apt-get install -y libpq-dev && docker-php-ext-install pdo_pgsql
+
 
