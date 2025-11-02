@@ -5,12 +5,13 @@ use PDO;
 use PDOException;
 
 class Database {
+    private static $instance = null;
     private $connection;
 
-    public function __construct() {
+    private function __construct() {
         $databaseUrl = getenv('DATABASE_URL');
         if (!$databaseUrl) {
-            throw new \Exception('DATABASE_URL not configured in environment');
+            throw new \Exception('DATABASE_URL not configured');
         }
 
         $db = parse_url($databaseUrl);
@@ -30,6 +31,14 @@ class Database {
         } catch (PDOException $e) {
             throw new \Exception('Database connection failed: ' . $e->getMessage());
         }
+    }
+
+    // ✅ Méthode statique pour accéder à une seule instance
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
 
     public function getConnection() {
