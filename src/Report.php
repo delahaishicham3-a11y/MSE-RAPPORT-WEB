@@ -171,13 +171,13 @@ class Report {
         $stmt = $this->db->prepare("SELECT * FROM reports WHERE id = :id");
         $stmt->execute(['id' => $id]);
         $report = $stmt->fetch();
-  }
+
         if ($report) {
             $report['mesures'] = json_decode($report['mesures'], true);
             $report['controles'] = json_decode($report['controles'], true);
             $report['releves'] = json_decode($report['releves'], true);
             $report['photos'] = $this->getPhotos($id);
-        }
+
 
         return $report;
     }
