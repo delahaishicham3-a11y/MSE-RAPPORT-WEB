@@ -1,7 +1,7 @@
 <?php
 namespace MSE;
 
-use MSE\database;
+use MSE\Database;
 use PDO;
 use Exception;
 
@@ -177,13 +177,8 @@ class Report {
             $report['controles'] = json_decode($report['controles'], true);
             $report['releves'] = json_decode($report['releves'], true);
             $report['photos'] = $this->getPhotos($id);
-
+        }
 
         return $report;
     }
 }
-
-
-
-
-
