@@ -43,3 +43,6 @@ CMD mkdir -p /tmp/sessions && \
     chown www-data:www-data /tmp/sessions && \
     chmod 750 /tmp/sessions && \
     apache2-foreground
+
+RUN apt-get update && apt-get install -y php8.2-pgsql
+
