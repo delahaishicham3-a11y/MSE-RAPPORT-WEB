@@ -77,5 +77,5 @@ class Database {
 
     // --- Empêche le clonage et la désérialisation du Singleton
     private function __clone() {}
-    private function __wakeup() {}
+    public function __wakeup() {}
 }
